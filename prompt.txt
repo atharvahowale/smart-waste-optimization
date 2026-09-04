@@ -1,0 +1,1399 @@
+Build a polished, interactive web prototype for our SIH 2026 project:
+
+PROJECT TITLE:
+Smart Plastic Waste Collection Optimization Platform
+
+CORE PURPOSE:
+This is NOT a generic recycling dashboard.
+
+The prototype must demonstrate our mathematical route-optimization model working in real time.
+
+The most important part of the prototype is the MATHEMATICAL DECISION ENGINE.
+
+The UI should make it visually obvious WHY a collection point was selected, which points were rejected, how the vehicle's remaining capacity changes, and how the route is re-optimized after actual collection data or live point updates.
+
+The prototype should feel like a real operational optimization system rather than a static mockup.
+
+--------------------------------------------------
+1. CORE ALGORITHM
+--------------------------------------------------
+
+The complete decision loop is:
+
+FILTER → SCORE → SELECT → COLLECT → VERIFY → UPDATE → RE-OPTIMIZE → REPEAT
+
+At every decision:
+
+1. Receive latest collection-point data.
+2. Filter invalid/infeasible collection points.
+3. Calculate score for every feasible point.
+4. Select the highest-scoring feasible point.
+5. Vehicle travels to that point.
+6. At checkpoint, replace estimated quantity with actual collected weight and volume.
+7. Update vehicle state.
+8. Recalculate remaining weight and volume capacity.
+9. Recalculate scores.
+10. Continue until no feasible collection points remain or vehicle capacity is exhausted.
+
+This loop must actually execute in the prototype.
+
+DO NOT fake the mathematical result with hardcoded "recommended point" labels.
+
+The selected point MUST be calculated by the algorithm.
+
+--------------------------------------------------
+2. VEHICLE STATE
+--------------------------------------------------
+
+Each vehicle has:
+
+- Maximum weight capacity W_max
+- Maximum volume capacity V_max
+- Current loaded weight W_load
+- Current occupied volume V_load
+- Current location L_v
+
+Remaining capacity is:
+
+W_rem = W_max - W_load
+
+V_rem = V_max - V_load
+
+Display these values prominently in the UI.
+
+Example:
+
+Maximum:
+500 kg | 10 m³
+
+Current:
+220 kg | 6 m³
+
+Remaining:
+280 kg | 4 m³
+
+Show live progress bars for both weight and volume.
+
+These values must change after every collection.
+
+--------------------------------------------------
+3. COLLECTION POINT DATA
+--------------------------------------------------
+
+Each collection point must contain:
+
+- Point ID
+- Name
+- Latitude
+- Longitude
+- Availability status
+- Estimated plastic weight
+- Estimated plastic volume
+- Accessibility status
+- Actual collected weight
+- Actual occupied volume
+- Distance from current vehicle position
+- Estimated travel time
+- Current score
+- Feasibility status
+
+Example data:
+
+P1:
+80 kg
+1.5 m³
+Available
+Accessible
+
+P2:
+150 kg
+2.0 m³
+Available
+Accessible
+
+P3:
+300 kg
+4.5 m³
+Available
+Accessible
+
+P4:
+50 kg
+0.8 m³
+Unavailable
+
+P5:
+100 kg
+1.2 m³
+Available
+Accessible
+
+Use realistic sample data, but structure the system so the data can be changed interactively.
+
+--------------------------------------------------
+4. FEASIBILITY ENGINE
+--------------------------------------------------
+
+Before scoring, remove points that are not feasible.
+
+A point is feasible only if:
+
+S_i = 1
+
+AND
+
+W_hat_i <= W_rem
+
+AND
+
+V_hat_i <= V_rem
+
+AND
+
+A_i = 1
+
+Where:
+
+S_i = availability status
+
+A_i = accessibility status
+
+W_hat_i = estimated weight
+
+V_hat_i = estimated volume
+
+The prototype MUST visibly show this filtering.
+
+For every point, show:
+
+AVAILABLE / UNAVAILABLE
+WEIGHT FIT / OVER CAPACITY
+VOLUME FIT / OVER CAPACITY
+ACCESSIBLE / INACCESSIBLE
+
+Then show:
+
+FEASIBLE
+or
+REJECTED
+
+Example:
+
+P3:
+Available ✓
+Accessible ✓
+Weight: 300 kg > 280 kg ✕
+Volume: 4.5 m³ > 4 m³ ✕
+STATUS: REJECTED
+
+Do not calculate a score for rejected points.
+
+Create a visible "Feasible Set":
+
+F = {P1, P2, P5}
+
+This is important because the prototype must demonstrate the mathematical constraint layer.
+
+--------------------------------------------------
+5. POINT SCORING ENGINE
+--------------------------------------------------
+
+THIS FORMULA IS CRITICAL.
+
+DO NOT MODIFY, SIMPLIFY, REPLACE OR APPROXIMATE IT.
+
+Use exactly:
+
+Score_i =
+α(W_hat_i / W_rem)
++ β(V_hat_i / V_rem)
+- γ(D_i / D_max)
+- δ(T_i / T_max)
+
+Render the formula beautifully using MathJax or KaTeX.
+
+The formula must be used by the actual JavaScript/TypeScript calculation engine.
+
+Definitions:
+
+Score_i:
+Final score of collection point i
+
+W_hat_i:
+Estimated plastic weight at point i
+
+W_rem:
+Vehicle's remaining weight capacity
+
+V_hat_i:
+Estimated plastic volume at point i
+
+V_rem:
+Vehicle's remaining volume capacity
+
+D_i:
+Distance from current vehicle position to point i
+
+D_max:
+Maximum/reference distance used for normalization
+
+T_i:
+Estimated travel time to point i
+
+T_max:
+Maximum/reference travel time used for normalization
+
+α:
+Weight-utilization priority
+
+β:
+Volume-utilization priority
+
+γ:
+Distance penalty
+
+δ:
+Travel-time penalty
+
+i:
+Collection-point index
+
+The coefficients must be configurable in the UI.
+
+Example default values:
+
+α = 0.30
+β = 0.30
+γ = 0.20
+δ = 0.20
+
+Ensure:
+
+α + β + γ + δ = 1
+
+Provide sliders or numeric controls for these four parameters.
+
+If the user changes α, β, γ or δ, ALL feasible-point scores must recalculate immediately.
+
+--------------------------------------------------
+6. NORMALIZATION
+--------------------------------------------------
+
+The scoring formula uses normalized quantities.
+
+Weight utilization:
+
+W_hat_i / W_rem
+
+Volume utilization:
+
+V_hat_i / V_rem
+
+Distance:
+
+D_i / D_max
+
+Travel time:
+
+T_i / T_max
+
+Calculate D_max and T_max from the current candidate set/reference values.
+
+Do not use raw kilograms, kilometres and minutes directly in the score.
+
+The purpose is to make all terms dimensionless and comparable.
+
+--------------------------------------------------
+7. POINT RANKING
+--------------------------------------------------
+
+After calculating scores for all feasible points:
+
+Sort points by descending Score_i.
+
+Display a live ranking table:
+
+RANK | POINT | WEIGHT | VOLUME | DISTANCE | TIME | SCORE | STATUS
+
+Example:
+
+1 | P1 | 80 kg | 1.5 m³ | 3.0 km | 6 min | 0.XX | SELECTED
+2 | P5 | 100 kg | 1.2 m³ | 4.0 km | 8 min | 0.XX | FEASIBLE
+3 | P2 | 150 kg | 2.0 m³ | 8.0 km | 15 min | 0.XX | FEASIBLE
+
+Then select:
+
+P* = argmax Score_i
+
+The prototype MUST calculate this dynamically.
+
+Display:
+
+"BEST FEASIBLE POINT → P1"
+
+--------------------------------------------------
+8. MAP / ROUTE VISUALIZATION
+--------------------------------------------------
+
+Create a map-based visualization.
+
+Show:
+
+- Vehicle current location
+- Collection points
+- Feasible points
+- Rejected points
+- Selected next point
+- Current route
+- Distance
+- ETA
+
+Use OpenStreetMap/Leaflet if possible.
+
+The selected point should be visually emphasized.
+
+Rejected points should remain visible but clearly marked as infeasible.
+
+When the selected point changes, the route shown on the map must change.
+
+The route must originate from the vehicle's CURRENT location, not the original starting location.
+
+--------------------------------------------------
+9. CHECKPOINT VERIFICATION
+--------------------------------------------------
+
+When the vehicle reaches the selected point, simulate a checkpoint.
+
+Show:
+
+ESTIMATED:
+80 kg
+1.5 m³
+
+ACTUAL:
+72 kg
+1.4 m³
+
+The actual values MUST replace the estimates for the completed collection.
+
+Use the flow:
+
+ESTIMATE → VERIFY → UPDATE
+
+This should be interactive.
+
+Have a button:
+
+"ARRIVE AT CHECKPOINT"
+
+Then:
+
+"VERIFY COLLECTION"
+
+Then allow actual weight and volume to be entered or generated.
+
+--------------------------------------------------
+10. VEHICLE STATE UPDATE
+--------------------------------------------------
+
+After actual collection:
+
+W_load_new =
+W_load_old + W_actual
+
+V_load_new =
+V_load_old + V_actual
+
+Then:
+
+W_rem =
+W_max - W_load
+
+V_rem =
+V_max - V_load
+
+Update the dashboard immediately.
+
+Example:
+
+Before:
+220 kg | 6.0 m³
+
+Actual pickup:
++72 kg | +1.4 m³
+
+After:
+292 kg | 7.4 m³
+
+Remaining:
+208 kg | 2.6 m³
+
+The capacity bars must visibly change.
+
+--------------------------------------------------
+11. RE-OPTIMIZATION
+--------------------------------------------------
+
+THIS IS ONE OF THE MOST IMPORTANT FEATURES.
+
+After every checkpoint:
+
+DO NOT continue using the old route.
+
+Instead:
+
+1. Update current vehicle location.
+2. Update actual weight.
+3. Update actual volume.
+4. Recalculate remaining capacity.
+5. Rebuild feasible set.
+6. Recalculate distance and travel time.
+7. Recalculate Score_i.
+8. Rank all feasible points again.
+9. Select the new highest-scoring point.
+
+Display a visible event:
+
+"VEHICLE STATE CHANGED"
+
+then:
+
+"RECALCULATING FEASIBLE SET..."
+
+then:
+
+"RECALCULATING SCORES..."
+
+then:
+
+"NEW BEST NEXT POINT → P?"
+
+Use a short animation so the user can see the optimization cycle happening.
+
+--------------------------------------------------
+12. REAL-TIME COLLECTION-POINT UPDATES
+--------------------------------------------------
+
+The prototype must simulate live updates while the vehicle is travelling.
+
+Provide a control:
+
+"+ NEW COLLECTION POINT"
+
+and/or:
+
+"SIMULATE LIVE UPDATE"
+
+Example:
+
+While vehicle is travelling:
+
+P6 becomes available.
+
+P6:
+120 kg
+1.5 m³
+Available
+Accessible
+
+The system must:
+
+1. Add P6 to the collection-point dataset.
+2. Check feasibility.
+3. Add it to the candidate pool if feasible.
+4. Calculate its score.
+5. Re-rank candidates.
+6. Determine whether the next decision changes.
+
+Display:
+
+"NEW LIVE POINT DETECTED"
+
+Then:
+
+"P6 ADDED TO CANDIDATE POOL"
+
+Then:
+
+"ROUTE RE-EVALUATED"
+
+This demonstrates that the route is dynamic rather than fixed.
+
+--------------------------------------------------
+13. TWO TYPES OF REAL-TIME EVENTS
+--------------------------------------------------
+
+The prototype should explicitly distinguish:
+
+A. VEHICLE EVENT
+
+Vehicle reaches checkpoint
+→ Actual weight/volume measured
+→ Vehicle state changes
+→ Re-optimize
+
+B. NETWORK EVENT
+
+Collection point becomes available/unavailable
+OR quantity changes
+→ Candidate set changes
+→ Re-optimize
+
+Show these in a small live event log.
+
+Example:
+
+[14:32:10] Vehicle reached P1
+[14:32:11] Actual pickup: 72 kg / 1.4 m³
+[14:32:11] Vehicle state updated
+[14:32:12] Feasible set recalculated
+[14:32:12] Scores recalculated
+[14:32:13] P5 selected
+
+[14:34:21] P6 became available
+[14:34:21] P6 added to candidate set
+[14:34:22] Scores recalculated
+[14:34:22] Next point changed: P5 → P6
+
+--------------------------------------------------
+14. LOOK-AHEAD MODULE
+--------------------------------------------------
+
+Include an optional "Look-Ahead" feature.
+
+The base algorithm is:
+
+Dynamic Capacity-Aware Greedy Re-Optimization.
+
+The system first chooses the best current feasible point.
+
+Then optionally evaluate the next decision after each candidate.
+
+For example:
+
+Current → P1 → Best Next
+Current → P2 → Best Next
+Current → P5 → Best Next
+
+Compare the two-step outcomes.
+
+This should be presented as:
+
+LOOK-AHEAD ANALYSIS
+
+Candidate:
+P1
+Next best after P1:
+P5
+Combined outcome:
+...
+
+Candidate:
+P2
+Next best after P2:
+P6
+Combined outcome:
+...
+
+Do not make the look-ahead replace the main scoring formula.
+
+The main formula remains the core scoring function.
+
+--------------------------------------------------
+15. SIMULATION MODE
+--------------------------------------------------
+
+Create a "RUN SIMULATION" button.
+
+When clicked, the system should automatically demonstrate:
+
+START
+↓
+Load vehicle state
+↓
+Load collection points
+↓
+Filter infeasible points
+↓
+Calculate scores
+↓
+Select best point
+↓
+Move vehicle toward point
+↓
+Reach checkpoint
+↓
+Verify actual quantity
+↓
+Update capacity
+↓
+Re-optimize
+↓
+Introduce a live point update
+↓
+Recalculate
+↓
+Select next point
+↓
+Repeat
+
+Provide:
+
+START SIMULATION
+PAUSE
+STEP
+RESET
+
+"STEP" is extremely important.
+
+When STEP is pressed, advance exactly one algorithm stage.
+
+This allows us to explain the mathematics to judges.
+
+--------------------------------------------------
+16. ALGORITHM TRACE PANEL
+--------------------------------------------------
+
+Create a panel called:
+
+"DECISION TRACE"
+
+Every time the algorithm chooses a point, show:
+
+CURRENT VEHICLE STATE
+Location:
+Remaining Weight:
+Remaining Volume:
+
+FEASIBLE SET
+{P1, P2, P5}
+
+SCORES
+P1 = ...
+P2 = ...
+P5 = ...
+
+DECISION
+argmax(Score_i)
+
+SELECTED
+P1
+
+REASON
+Highest score among feasible points.
+
+This should update after every decision.
+
+--------------------------------------------------
+17. MATH PANEL
+--------------------------------------------------
+
+Create a dedicated "MATH CORE" panel.
+
+Display the exact scoring formula:
+
+Score_i =
+α(W_hat_i / W_rem)
++ β(V_hat_i / V_rem)
+- γ(D_i / D_max)
+- δ(T_i / T_max)
+
+Below it display:
+
+Collection Benefit:
+Weight + Volume utilization
+
+Travel Cost:
+Distance + Travel Time
+
+Decision:
+Highest feasible score wins.
+
+Also show the current values of:
+
+α
+β
+γ
+δ
+
+and allow them to be adjusted.
+
+When values change, show the ranking changing live.
+
+--------------------------------------------------
+18. MATHEMATICAL EXPLAINABILITY
+--------------------------------------------------
+
+The user should be able to click a collection point and see:
+
+WHY WAS THIS POINT SELECTED?
+
+Example:
+
+P1
+
+Weight contribution:
+α × (80 / 280) = ...
+
+Volume contribution:
+β × (1.5 / 4) = ...
+
+Distance penalty:
+γ × (3 / D_max) = ...
+
+Travel-time penalty:
+δ × (6 / T_max) = ...
+
+Final:
+
+Score_P1 = ...
+
+This is important.
+
+The prototype must expose the mathematical reasoning behind the decision rather than hiding it.
+
+--------------------------------------------------
+19. SCENARIO CONTROLS
+--------------------------------------------------
+
+Provide controls to manipulate the mathematical environment.
+
+Examples:
+
+Change vehicle maximum weight.
+Change vehicle maximum volume.
+Change current vehicle load.
+Change collection point quantity.
+Toggle availability.
+Toggle accessibility.
+Change α.
+Change β.
+Change γ.
+Change δ.
+Add a new collection point.
+Change actual pickup quantity.
+
+Every change should trigger recalculation where appropriate.
+
+This turns the prototype into an interactive mathematical model rather than a fixed demo.
+
+--------------------------------------------------
+20. UI STRUCTURE
+--------------------------------------------------
+
+Use a professional dark/light modern logistics-tech interface.
+
+Main dashboard:
+
+TOP:
+Project name
+"Dynamic Collection Optimization Engine"
+System status: LIVE
+
+LEFT:
+Map
+
+CENTER:
+Vehicle state + capacity
+
+RIGHT:
+Next-point recommendation + score
+
+BOTTOM:
+Candidate ranking table
+
+SECOND SECTION:
+Mathematical scoring engine
+
+THIRD SECTION:
+Decision trace / event log
+
+FOURTH SECTION:
+Simulation controls
+
+Avoid excessive cards and unnecessary decorative content.
+
+The mathematical model should visually dominate the prototype.
+
+--------------------------------------------------
+21. VISUAL DESIGN
+--------------------------------------------------
+
+Style:
+
+Professional
+Modern
+Technical
+Clean
+SIH presentation quality
+
+Use:
+
+- Dark navy/white base
+- Green for feasible/available
+- Red for rejected/infeasible
+- Amber/yellow for warnings
+- Blue for active route
+- Strong typography
+- Smooth but restrained animations
+- Mathematical notation using KaTeX/MathJax
+
+Use subtle "engineering/math" visual language:
+
+FILTER
+↓
+FEASIBLE SET
+↓
+OBJECTIVE FUNCTION
+↓
+argmax
+↓
+DECISION
+↓
+STATE UPDATE
+↓
+RE-OPTIMIZE
+
+Do not make it look like a childish recycling app.
+
+--------------------------------------------------
+22. TECHNOLOGY
+--------------------------------------------------
+
+Preferred stack:
+
+Frontend:
+React + TypeScript
+
+Styling:
+Tailwind CSS
+
+Maps:
+Leaflet + OpenStreetMap
+
+Charts:
+Recharts or equivalent
+
+Mathematical rendering:
+KaTeX or MathJax
+
+State:
+React state or Zustand
+
+No backend is required for the prototype unless necessary.
+
+Use simulated real-time data locally.
+
+Structure the code cleanly so a real backend/WebSocket layer can be connected later.
+
+--------------------------------------------------
+23. IMPORTANT ENGINEERING REQUIREMENT
+--------------------------------------------------
+
+Separate the mathematical engine from the UI.
+
+Create a dedicated optimization module, for example:
+
+/src/engine/
+
+with functions such as:
+
+calculateRemainingCapacity()
+isFeasible()
+calculateDistance()
+calculateTravelTime()
+calculateScore()
+rankFeasiblePoints()
+selectBestPoint()
+updateVehicleState()
+reoptimizeRoute()
+
+The UI must call these functions.
+
+DO NOT place the mathematical calculations directly inside UI components.
+
+--------------------------------------------------
+24. CORE DATA TYPES
+--------------------------------------------------
+
+Create TypeScript interfaces/types for:
+
+Vehicle
+CollectionPoint
+VehicleState
+ScoreResult
+FeasibilityResult
+OptimizationResult
+EventLog
+
+Example:
+
+Vehicle:
+
+id
+maxWeight
+maxVolume
+currentWeight
+currentVolume
+latitude
+longitude
+
+CollectionPoint:
+
+id
+name
+latitude
+longitude
+available
+accessible
+estimatedWeight
+estimatedVolume
+actualWeight?
+actualVolume?
+distance
+travelTime
+score
+feasible
+
+--------------------------------------------------
+25. RESET / REPRODUCIBILITY
+--------------------------------------------------
+
+Provide:
+
+RESET SIMULATION
+
+This must restore the exact initial scenario.
+
+Also provide:
+
+LOAD DEMO SCENARIO
+
+Use deterministic demo data so the mathematical decisions are reproducible.
+
+--------------------------------------------------
+26. DO NOT DO THESE THINGS
+--------------------------------------------------
+
+DO NOT:
+
+- Hardcode the winning point.
+- Fake score calculations.
+- Use a random score generator.
+- Replace the scoring formula with a simpler formula.
+- Ignore volume.
+- Ignore remaining vehicle capacity.
+- Use only distance to select the next point.
+- Create a static route.
+- Hide rejected points.
+- Pretend estimated quantity is always accurate.
+- Make the dashboard the main focus while hiding the algorithm.
+- Add meaningless AI branding.
+- Claim machine learning unless actually implemented.
+- Claim real-time backend functionality when this is only simulated.
+- Replace mathematical optimization with a generic nearest-neighbor route.
+
+The prototype must demonstrate the actual mathematical model.
+
+--------------------------------------------------
+27. DEMO STORY
+--------------------------------------------------
+
+The default demo should tell this story:
+
+Vehicle starts:
+
+Maximum:
+500 kg
+10 m³
+
+Current:
+220 kg
+6 m³
+
+Remaining:
+280 kg
+4 m³
+
+Collection points:
+
+P1:
+80 kg
+1.5 m³
+3 km
+6 min
+Available
+Accessible
+
+P2:
+150 kg
+2.0 m³
+8 km
+15 min
+Available
+Accessible
+
+P3:
+300 kg
+4.5 m³
+5 km
+10 min
+Available
+Accessible
+
+P4:
+50 kg
+0.8 m³
+2 km
+4 min
+Unavailable
+
+P5:
+100 kg
+1.2 m³
+4 km
+8 min
+Available
+Accessible
+
+The system filters P3 because it exceeds remaining weight AND volume.
+
+P4 is rejected because it is unavailable.
+
+P1, P2 and P5 remain feasible.
+
+Calculate the exact Score_i formula for P1, P2 and P5.
+
+Select the highest-scoring point.
+
+Vehicle moves to the selected point.
+
+At checkpoint, use an actual quantity different from the estimate.
+
+Example:
+
+Estimated:
+80 kg
+1.5 m³
+
+Actual:
+72 kg
+1.4 m³
+
+Update vehicle:
+
+292 kg
+7.4 m³
+
+Remaining:
+
+208 kg
+2.6 m³
+
+Recalculate the feasible set and scores.
+
+While the vehicle is travelling, introduce P6:
+
+120 kg
+1.5 m³
+Available
+Accessible
+
+Recalculate again.
+
+The prototype should visibly demonstrate that the decision can change because the state and available information changed.
+
+--------------------------------------------------
+28. SUCCESS CRITERIA
+--------------------------------------------------
+
+The prototype is successful ONLY if a judge can understand this within 60 seconds:
+
+"Collection points are filtered using real physical constraints.
+The remaining points are mathematically scored.
+The highest-scoring feasible point is selected.
+Actual pickup data changes the vehicle state.
+New information can arrive during the journey.
+The system recalculates and dynamically chooses the next point."
+
+The central visual story is:
+
+LIVE DATA
+↓
+FILTER
+↓
+FEASIBLE SET
+↓
+SCORE
+↓
+argmax
+↓
+SELECT
+↓
+COLLECT
+↓
+VERIFY
+↓
+UPDATE
+↓
+RE-OPTIMIZE ↺
+
+--------------------------------------------------
+29. FINAL QUALITY BAR
+--------------------------------------------------
+
+Make the prototype feel like a real mathematical optimization product.
+
+It should be:
+
+Interactive
+Responsive
+Visually polished
+Mathematically correct
+Explainable
+Demo-friendly
+Easy to operate during a presentation
+
+The mathematical engine is the SOUL of the prototype.
+
+Prioritize correctness of:
+
+1. Feasibility filtering
+2. Remaining capacity
+3. Exact scoring formula
+4. Score ranking
+5. Best-point selection
+6. Actual pickup verification
+7. Vehicle state update
+8. Live point updates
+9. Re-optimization
+
+over decorative UI.
+
+Build the complete working prototype now.
+
+
+
+--------------------------------------------------
+30. MOBILE-FIRST + RESPONSIVE REQUIREMENT
+--------------------------------------------------
+
+The prototype MUST be fully responsive and functional on:
+
+- Desktop
+- Laptop
+- Tablet
+- Android phones
+- iPhones
+
+Design the application using a MOBILE-FIRST approach.
+
+The mobile version is NOT simply a scaled-down desktop version.
+
+The core workflow must remain completely usable on a phone.
+
+MOBILE PRIORITY:
+
+1. Driver Interface
+2. Collection Point Interface
+3. Collection Booth / Reward Interface
+4. Optimization Decision View
+5. Admin Dashboard
+
+--------------------------------------------------
+MOBILE DRIVER VIEW
+--------------------------------------------------
+
+On mobile, prioritize:
+
+- Current vehicle location
+- Next collection point
+- Navigation/route
+- Remaining weight capacity
+- Remaining volume capacity
+- Current score / selected point
+- "ARRIVE AT CHECKPOINT"
+- "VERIFY COLLECTION"
+- "RE-OPTIMIZE"
+
+Use large touch-friendly buttons.
+
+Do not require horizontal scrolling.
+
+--------------------------------------------------
+MOBILE COLLECTION POINT VIEW
+--------------------------------------------------
+
+Provide a simple mobile interface for:
+
+- Point ID
+- Availability toggle
+- Estimated weight
+- Estimated volume
+- Accessibility status
+- Submit/update information
+
+The operator should be able to update a collection point in a few taps.
+
+--------------------------------------------------
+MOBILE MATHEMATICAL VIEW
+--------------------------------------------------
+
+The mathematical engine must remain accessible on mobile.
+
+The formula:
+
+Score_i =
+α(W_hat_i / W_rem)
++ β(V_hat_i / V_rem)
+- γ(D_i / D_max)
+- δ(T_i / T_max)
+
+must fit within the mobile screen.
+
+If necessary, use a horizontally scrollable mathematical container ONLY for the formula.
+
+The explanation and score results themselves must remain readable without horizontal scrolling.
+
+Show:
+
+FEASIBLE SET
+↓
+POINT SCORES
+↓
+BEST POINT
+↓
+DECISION TRACE
+
+as vertically stacked sections on mobile.
+
+--------------------------------------------------
+MOBILE SIMULATION
+--------------------------------------------------
+
+The simulation must work completely on mobile.
+
+Buttons:
+
+[▶ RUN]
+[⏸ PAUSE]
+[⏭ STEP]
+[↻ RESET]
+
+must be large enough for touch interaction.
+
+The user must be able to run the complete:
+
+FILTER
+→ SCORE
+→ SELECT
+→ COLLECT
+→ VERIFY
+→ UPDATE
+→ RE-OPTIMIZE
+
+cycle from a phone.
+
+--------------------------------------------------
+RESPONSIVE LAYOUT
+--------------------------------------------------
+
+Desktop:
+
+Use a multi-column dashboard:
+
+MAP | VEHICLE STATE | DECISION
+
+Then:
+
+FEASIBILITY | SCORING | DECISION TRACE
+
+Mobile:
+
+Stack sections vertically:
+
+1. Vehicle State
+2. Next Point
+3. Map
+4. Feasibility
+5. Mathematical Score
+6. Decision Trace
+7. Checkpoint
+8. Simulation Controls
+
+Do not simply shrink desktop cards.
+
+Reflow the layout intelligently.
+
+--------------------------------------------------
+TOUCH + MOBILE UX
+--------------------------------------------------
+
+Minimum touch target:
+44px × 44px
+
+Use:
+
+- Large buttons
+- Readable typography
+- Clear status indicators
+- Bottom navigation where appropriate
+- Sticky "Next Point" / action area when useful
+- No hover-dependent functionality
+- No tiny controls
+- No desktop-only interactions
+
+--------------------------------------------------
+PERFORMANCE
+--------------------------------------------------
+
+The prototype should remain smooth on mid-range Android devices.
+
+Avoid unnecessary animations, heavy libraries, and excessive map rendering.
+
+The mathematical calculations should execute instantly.
+
+When re-optimization occurs, use a short visual transition rather than a heavy animation.
+
+--------------------------------------------------
+PWA
+--------------------------------------------------
+
+Make the prototype installable as a PWA if possible.
+
+Include:
+
+- Responsive viewport
+- App manifest
+- App icon
+- Standalone display mode
+- Mobile-friendly layout
+
+The prototype should feel like a real mobile application when opened on a phone.
+
+--------------------------------------------------
+FINAL RESPONSIVE TEST
+--------------------------------------------------
+
+Before finishing, test the UI at:
+
+320px
+375px
+390px
+412px
+768px
+1024px
+1280px+
+
+There must be:
+
+- No broken layout
+- No clipped content
+- No unintended horizontal scrolling
+- No overlapping elements
+- No unreadable mathematical content
+- No inaccessible buttons
+
+The mathematical engine and simulation MUST behave identically across desktop and mobile.
+
+Desktop and mobile are two interfaces to the SAME optimization engine, not two separate implementations.

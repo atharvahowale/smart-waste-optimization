@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="60" viewBox="0 0 500 60">
+  <style>
+    .formula-text { font-family: 'Times New Roman', serif; font-style: italic; font-size: 24px; fill: #1e293b; }
+    .formula-sub { font-size: 16px; }
+    .formula-hat { font-size: 14px; }
+  </style>
+  
+  <!-- Score_i -->
+  <text x="10" y="35" class="formula-text">Score</text>
+  <text x="80" y="42" class="formula-text formula-sub">i</text>
+  
+  <!-- = -->
+  <text x="100" y="35" class="formula-text">=</text>
+  
+  <!-- α -->
+  <text x="125" y="35" class="formula-text">α</text>
+  
+  <!-- W with hat -->
+  <text x="152" y="20" class="formula-text">W</text>
+  <text x="152" y="14" class="formula-hat">^</text>
+  <text x="175" y="27" class="formula-text formula-sub">i</text>
+  
+  <!-- divider line -->
+  <line x1="147" y1="32" x2="183" y2="32" stroke="#1e293b" stroke-width="1.5"/>
+  
+  <!-- W_rem -->
+  <text x="147" y="50" class="formula-text">W</text>
+  <text x="168" y="55" class="formula-text formula-sub">rem</text>
+  
+  <!-- + β -->
+  <text x="210" y="35" class="formula-text">+ β</text>
+  
+  <!-- V with hat -->
+  <text x="255" y="20" class="formula-text">V</text>
+  <text x="255" y="14" class="formula-hat">^</text>
+  <text x="274" y="27" class="formula-text formula-sub">i</text>
+  
+  <!-- divider line -->
+  <line x1="250" y1="32" x2="282" y2="32" stroke="#1e293b" stroke-width="1.5"/>
+  
+  <!-- V_rem -->
+  <text x="252" y="50" class="formula-text">V</text>
+  <text x="270" y="55" class="formula-text formula-sub">rem</text>
+  
+  <!-- - γ -->
+  <text x="305" y="35" class="formula-text">- γ</text>
+  
+  <!-- D_i -->
+  <text x="350" y="20" class="formula-text">D</text>
+  <text x="370" y="27" class="formula-text formula-sub">i</text>
+  
+  <!-- divider line -->
+  <line x1="345" y1="32" x2="385" y2="32" stroke="#1e293b" stroke-width="1.5"/>
+  
+  <!-- D_max -->
+  <text x="345" y="50" class="formula-text">D</text>
+  <text x="365" y="55" class="formula-text formula-sub">max</text>
+  
+  <!-- - δ -->
+  <text x="405" y="35" class="formula-text">- δ</text>
+  
+  <!-- T_i -->
+  <text x="445" y="20" class="formula-text">T</text>
+  <text x="463" y="27" class="formula-text formula-sub">i</text>
+  
+  <!-- divider line -->
+  <line x1="442" y1="32" x2="475" y2="32" stroke="#1e293b" stroke-width="1.5"/>
+  
+  <!-- T_max -->
+  <text x="440" y="50" class="formula-text">T</text>
+  <text x="458" y="55" class="formula-text formula-sub">max</text>
+</svg>
