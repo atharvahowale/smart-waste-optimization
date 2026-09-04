@@ -64,7 +64,7 @@ function App() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold">
-                Smart Plastic Waste Collection
+                PolyRoute
               </h1>
               <p className="text-sm md:text-base opacity-90">
                 Dynamic Collection Optimization Engine
@@ -173,7 +173,7 @@ function App() {
         {/* Footer */}
         <footer className="text-center text-sm text-navy-600 dark:text-navy-400 py-6">
           <div className="mb-2">
-            SIH 2026 Project: Smart Plastic Waste Collection Optimization Platform
+            SIH 2026 Project: PolyRoute - Plastic Waste Collection Optimization Platform
           </div>
           <div className="text-xs">
             Mathematical Decision Engine • Real-Time Route Optimization • Capacity-Aware Scheduling

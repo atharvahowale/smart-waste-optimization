@@ -1,6 +1,6 @@
 {
-  "name": "Smart Plastic Waste Collection Optimization",
-  "short_name": "Waste Optimization",
+  "name": "PolyRoute",
+  "short_name": "PolyRoute",
   "description": "Dynamic route optimization platform for plastic waste collection",
   "start_url": "/",
   "display": "standalone",
